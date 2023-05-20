@@ -32,7 +32,7 @@ const updateContact = (req , res) => {
 // api/v1/contacts/:id Method : DELETE
 const deleteContact = (req , res) => {
     console.log('delete request');
-    res.json({ message : `Contact deleted with id ${req.param.id}` })
+    res.json({ message : `Contact deleted with id ${req.params.id}` })
 }
 
 
