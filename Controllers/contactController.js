@@ -16,8 +16,8 @@ const getContact = (req , res) => {
 // @description
 // api/v1/contacts Method : GET
 const addContact = (req , res) => {
-    console.log('POST request');
-    res.json({ message : `Contact added with id` })
+    console.log('POST request' ,req.body );
+    res.json({ message : `Contact added` , data: req.body })
 }
 
 

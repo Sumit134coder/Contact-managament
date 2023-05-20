@@ -6,6 +6,9 @@ const recordRouter = require("./routes/recordRoutes")
 
 const PORT = 3000;
 
+// inbuilt body parser comes with express
+app.use(express.json())
+
 app.use("/api/v1", router);
 app.use("/api/v2", recordRouter);
 
