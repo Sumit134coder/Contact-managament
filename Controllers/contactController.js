@@ -10,6 +10,11 @@ const getContacts = (req , res) => {
 // api/v1/contacts Method : GET
 const getContact = (req , res) => {
     console.log('get request');
+    let isFound = true;
+    if(!isFound){
+        res.status(400);
+        throw new Error('No contact found!')
+    }
     res.json({ message : `Contact get with id ${req.params.id}` })
 }
 
@@ -17,7 +22,13 @@ const getContact = (req , res) => {
 // api/v1/contacts Method : GET
 const addContact = (req , res) => {
     console.log('POST request' ,req.body );
-    res.json({ message : `Contact added` , data: req.body })
+    const { name , contact , email } = req.body;
+
+    if(!name || !contact || !email){
+        res.status(400);
+        throw new Error('Fields needed')
+    }
+    res.status(201).json({ message : `Contact added` , data: req.body })
 }
 
 
