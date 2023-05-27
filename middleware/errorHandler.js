@@ -1,8 +1,11 @@
 const statusCode = require('../constants')
 
 const errorHandler = (err, req,res , next) => {
+
+    console.log('err' , err)
+
     const status = res.statusCode || 500;
-    const description = res.description || 'Something went wrong'
+    const description = err.message || 'Something went wrong'
 
     // using swithc to handle error
     switch(status) {
@@ -19,6 +22,13 @@ const errorHandler = (err, req,res , next) => {
         })
         break;
 
+        case 403: res.status(status).json({
+            message: statusCode[status],
+            description,
+
+        })
+        break;
+
 
         default: res.status(500).json({
             message: statusCode[500],
@@ -28,7 +38,6 @@ const errorHandler = (err, req,res , next) => {
         break;
     }
 
-    console.log(status)
     res.status(status).json({
         message: err?.message
     })

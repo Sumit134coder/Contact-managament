@@ -12,10 +12,14 @@ const PORT = 3000;
 connectDb()
 
 // inbuilt body parser comes with express
-app.use(express.json())
 
-app.use("/api/v1", router);
+app.use(express.json());
+
+app.use("/api/v1/contacts", router);
 app.use("/api/v2", recordRouter);
+app.get('/contacts' , (req , res) => {
+  res.status(200).json({ message: 'test api working' })
+})
 app.use(errorHandler)
 
 

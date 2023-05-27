@@ -21,7 +21,9 @@ const contactSchema = new mongoose.Schema({
         }
     }
 } , {
-    timestamps : true,})
+    timestamps : true,
+    collection: 'contacts',
+})
 
 
-module.exports = mongoose.model('Contact' , contactSchema)
+module.exports = mongoose.model('Contact' , contactSchema , 'contacts')

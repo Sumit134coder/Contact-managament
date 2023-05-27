@@ -1,78 +1,111 @@
-const expressAsyncHandler = require("express-async-handler");
-const Contact = require('../models/contactSchema')
+const { response } = require('express')
+const contactSchema  = require('../models/contactSchema')
+const asyncHandler = require('express-async-handler')
 
-// @description
-// api/v1/contacts Method : GET
-const getContacts = expressAsyncHandler(async(req , res) => {
-    const contacts = await Contact.find();
-    console.log('get request');
-    res.json({ data: contacts, message : 'hello form get' })
-})
+const getContacts = asyncHandler(async(req , res) => {
 
+    const contacts = await contactSchema.find()
 
-// @description
-// api/v1/contacts Method : GET
-const getContact = expressAsyncHandler(async(req , res) => {
-    console.log('get request');
-    const contact = await Contact.findById(req.params.id);
-    if(!contact?.name){
-        res.status(400);
-        throw new Error('No contact found!')
-    }
-    res.json({ data : contact })
-})
-
-// @description
-// api/v1/contacts Method : GET
-const addContact = expressAsyncHandler(async(req , res) => {
-    console.log('POST request' ,req.body );
-    const { name , phone , email } = req.body;
-
-    if(!name?.firstName || !name?.lastName || !phone || !email){
-        res.status(400).json({description : 'Some fields are missing'});
-        throw new Error('Fields needed')
-    }
-
-    const newContact = await Contact.create({
-        name,
-        phone,
-        email
+    res.status(200).json({
+        message: 'Success',
+        data: contacts
     })
-    res.status(201).json({ message : `Contact added` , data : newContact })
 })
 
+const getContact = asyncHandler(async(req , res) => {
 
-// @description
-// api/v1/contacts/:id Method : PATCH
-const updateContact = expressAsyncHandler(async(req , res) => {
-    const contact = await Contact.findById(req.params.id);
-    if(!contact?.name){
-        res.status(400);
-        throw new Error('No contact found!')
+    const { id } = req.params;
+    const contact = await contactSchema.findById(id)
+    console.log('conatct' , contact);
+
+    if(!contact){
+        res.status(404);
     }
 
-    // this will update only the fields which will be in req.body
-    const updateContact = await Contact.findByIdAndUpdate(req.params.id, req.body , {new :true})
-    console.log('patch request' , updateContact);
-    res.json({ data: updateContact, message : `Contact updated with id ${req.params.id}` })
+    res.status(200).json({
+        data: contact
+    })
 })
 
-// @description
-// api/v1/contacts/:id Method : DELETE
-const deleteContact = expressAsyncHandler(async(req , res) => {
-    const contact = await Contact.findById(req.params.id);
-    if(!contact?.name){
+
+// add a new contact
+const addContact = asyncHandler(async(req , res) => {
+
+    const { phone , email , name } = req.body
+
+    if(!phone || !email || !name) {
         res.status(400);
-        throw new Error('No contact found!')
+        throw new Error('All Fields required')
     }
 
-    const contactToDelete = await Contact.findByIdAndDelete(req.params.id)
-    const updatedCollections = await Contact.find()
-    console.log('delete request');
-    res.json({ message : `Contact deleted with id ${req.params.id}` , data: updatedCollections })
+    const isExist = await contactSchema.findOne({
+        phone
+    })
+
+    console.log(isExist)
+
+    if(isExist) {
+        res.status(403);
+        throw new Error('Contact already exists')
+    }
+
+    const newContact = await contactSchema.create({
+        name, phone , email 
+    })
+
+
+  res.status(201).json({
+    message: 'Contact added',
+    data : newContact
+  })
 })
 
+const updateContact = asyncHandler(async(req,res) => {
+
+
+    const { id } = req.params;
+
+    //extract body 
+    const body = req.body
+
+    const contact = await contactSchema.findByIdAndUpdate(id , {
+        ...body
+    })
+
+
+    if(!contact){
+        res.status(404);
+        throw new Error('Contact not found');
+    }
+
+    const updatedContact = await contactSchema.findById(id)
+
+
+    res.status(201).json({
+        message: 'Contact updated',
+        data: updatedContact
+    })
+
+
+})
+
+//delete contact
+const deleteContact = asyncHandler(async(req,res)=>{
+
+    const  { id } = req.params
+
+    const deletedContact = await contactSchema.findByIdAndDelete(id);
+
+    if(!deletedContact){
+        res.status(404);
+        throw new Error('No Contact found');
+    }
+
+    res.status(200).json({
+        message: 'Contact deleted',
+    })
+})
 
 module.exports = {
-    getContacts , getContact , updateContact , deleteContact , addContact
+    getContacts , getContact , addContact , updateContact , deleteContact
 }
