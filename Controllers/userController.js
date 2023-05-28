@@ -24,6 +24,7 @@ const login = asyncHandler(async (req, res) => {
     throw new Error("Incorrect password!");
   }
 
+  //create new token
   const accessToken = jwt.sign({ user }, process.env.JWT_STRING, {
     expiresIn: "3h",
   });
