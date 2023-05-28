@@ -4,8 +4,11 @@ const asyncHandler = require("express-async-handler");
 const { decodeJWT } = require("../utils");
 
 const getContacts = asyncHandler(async (req, res) => {
-  const contacts = await contactSchema.find();
-
+    
+    console.log('queries' , req.query)
+    
+    // handling params in case of filters
+    const contacts = await contactSchema.find(req.query);
   res.status(200).json({
     message: "Success",
     data: contacts,
