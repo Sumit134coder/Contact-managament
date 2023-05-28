@@ -1,111 +1,141 @@
-const { response } = require('express')
-const contactSchema  = require('../models/contactSchema')
-const asyncHandler = require('express-async-handler')
+const contactSchema = require("../models/contactSchema");
+const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
+const { decodeJWT } = require("../utils");
 
-const getContacts = asyncHandler(async(req , res) => {
+const getContacts = asyncHandler(async (req, res) => {
+  const contacts = await contactSchema.find();
 
-    const contacts = await contactSchema.find()
+  res.status(200).json({
+    message: "Success",
+    data: contacts,
+  });
+});
 
-    res.status(200).json({
-        message: 'Success',
-        data: contacts
-    })
-})
+const getContact = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const contact = await contactSchema.findById(id);
+  console.log("conatct", contact);
 
-const getContact = asyncHandler(async(req , res) => {
+  if (!contact) {
+    res.status(404);
+  }
 
-    const { id } = req.params;
-    const contact = await contactSchema.findById(id)
-    console.log('conatct' , contact);
-
-    if(!contact){
-        res.status(404);
-    }
-
-    res.status(200).json({
-        data: contact
-    })
-})
-
+  res.status(200).json({
+    data: contact,
+  });
+});
 
 // add a new contact
-const addContact = asyncHandler(async(req , res) => {
+const addContact = asyncHandler(async (req, res) => {
+  //TODO: Pasrse incoming JWT token to get the user who added the contact
+  const receivedToken = req.headers.authorization.replace("Bearer ", "");
 
-    const { phone , email , name } = req.body
+  const { user } = decodeJWT(receivedToken);
 
-    if(!phone || !email || !name) {
-        res.status(400);
-        throw new Error('All Fields required')
-    }
+  const { phone, email, name } = req.body;
 
-    const isExist = await contactSchema.findOne({
-        phone
-    })
+  if (!phone || !email || !name) {
+    res.status(400);
+    throw new Error("All Fields required");
+  }
 
-    console.log(isExist)
+  const isExist = await contactSchema.findOne({
+    phone,
+  });
 
-    if(isExist) {
-        res.status(403);
-        throw new Error('Contact already exists')
-    }
+  console.log(isExist);
 
-    const newContact = await contactSchema.create({
-        name, phone , email 
-    })
+  if (isExist) {
+    res.status(403);
+    throw new Error("Contact already exists");
+  }
 
+  const newContact = await contactSchema.create({
+    name,
+    phone,
+    email,
+    addedBy: user._id,
+  });
 
   res.status(201).json({
-    message: 'Contact added',
-    data : newContact
-  })
-})
+    message: "Contact added",
+    data: newContact,
+  });
+});
 
-const updateContact = asyncHandler(async(req,res) => {
+const updateContact = asyncHandler(async (req, res) => {
+  const receivedToken = req.headers.authorization.replace("Bearer ", "");
 
+  const { user } = decodeJWT(receivedToken);
 
-    const { id } = req.params;
+  const { id } = req.params;
 
-    //extract body 
-    const body = req.body
+  //extract body
+  const body = req.body;
 
-    const contact = await contactSchema.findByIdAndUpdate(id , {
-        ...body
-    })
+  //find the contact with id and match the added by param
+  const contactToUpdate = await contactSchema.findById(id);
 
+  if (!contactToUpdate) {
+    res.status(404);
+    throw new Error("No contact found");
+  }
 
-    if(!contact){
-        res.status(404);
-        throw new Error('Contact not found');
-    }
+  if (user._id !== contactToUpdate.addedBy) {
+    res.status(401);
+    throw new Error("You cannot edit this contact");
+  }
 
-    const updatedContact = await contactSchema.findById(id)
+  const contact = await contactSchema.findByIdAndUpdate(id, {
+    ...body,
+  });
 
+  if (!contact) {
+    res.status(404);
+    throw new Error("Contact not found");
+  }
 
-    res.status(201).json({
-        message: 'Contact updated',
-        data: updatedContact
-    })
+  const updatedContact = await contactSchema.findById(id);
 
-
-})
+  res.status(201).json({
+    message: "Contact updated",
+    data: updatedContact,
+  });
+});
 
 //delete contact
-const deleteContact = asyncHandler(async(req,res)=>{
+const deleteContact = asyncHandler(async (req, res) => {
+  const receivedToken = req.headers.authorization.replace("Bearer ", "");
 
-    const  { id } = req.params
+  const { user } = decodeJWT(receivedToken);
 
-    const deletedContact = await contactSchema.findByIdAndDelete(id);
+  const { id } = req.params;
 
-    if(!deletedContact){
-        res.status(404);
-        throw new Error('No Contact found');
-    }
+  //find the contact with id and match the added by param
+  const contactToDelete = await contactSchema.findById(id);
 
-    res.status(200).json({
-        message: 'Contact deleted',
-    })
-})
+  if (!contactToDelete) {
+    res.status(404);
+    throw new Error("No contact found");
+  }
+
+  if (user._id !== contactToDelete.addedBy) {
+    res.status(401);
+    throw new Error("You cannot delete this contact");
+  }
+
+  const deletedContact = await contactSchema.findByIdAndDelete(id);
+
+  res.status(200).json({
+    message: "Contact deleted",
+  });
+});
 
 module.exports = {
-    getContacts , getContact , addContact , updateContact , deleteContact
-}
+  getContacts,
+  getContact,
+  addContact,
+  updateContact,
+  deleteContact,
+};

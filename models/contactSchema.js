@@ -19,6 +19,10 @@ const contactSchema = new mongoose.Schema({
             type: 'string',
             required: true,
         }
+    },
+    addedBy : {
+       type: String,
+       required: true,
     }
 } , {
     timestamps : true,
